@@ -56,6 +56,57 @@ df['title_year'] = df['title'] + df['release_year'].astype(str)
 # Remove duplicated rows
 df.drop_duplicates(subset=['title_year'], inplace=True)
 df.shape
+# Remove rows where runtime = 0 (logical exclusion)
+df = df[~df[['runtime']].isin([0]).any(axis=1)]
+df.shape
+# Noticed a substantial number of rows containing value = 0 in columns "revenue" and "budget"
+print(df[df['revenue'] == 0].shape[0])
+print(df[df['budget'] == 0].shape[0])
+# Dropping columns "revenue" and "budget" as these column a lot of missing information (i.e, 0 is null entry)
+df = df.drop('revenue', axis=1)
+df = df.drop('budget', axis=1)
+# Dropping these columns due to too much missing information
+df = df.drop('IMDB_Rating', axis=1)
+df = df.drop('Meta_score', axis=1)
+df = df.drop('Certificate', axis=1)
+df = df.drop('Star1', axis=1)
+df = df.drop('Star2', axis=1)
+df = df.drop('Star3', axis=1)
+df = df.drop('Star4', axis=1)
+df = df.drop('Music_Composer', axis=1)
+df = df.drop('Director_of_Photography', axis=1)
+df = df.drop('Producers', axis=1)
+df = df.drop('production_companies', axis=1)
+df = df.drop('Writer', axis=1) 
+df = df.drop('tagline', axis=1)
+
+Data transformation and feature engineering
+# choose relevant remaining columns for our topic modelling
+columns_to_keep  = ["overview", "keywords", "genres_list", "all_combined_keywords","overview_sentiment"]
+df_mod = df[columns_to_keep]
+# Since overview is an important feature to determine to overview sentiment of a movie, remove rows containing no movie overview
+df_mod = df_mod[df_mod['overview'].notna()]
+df_mod.shape
+# Combining all text columns
+texts = df_mod[["overview", "keywords", "genres_list", "all_combined_keywords"]].fillna("").agg(" ".join, axis=1)
+
+
+# Merge with original DataFrame
+df_combined = pd.concat([df_mod, texts], axis=1)
+
+# Drop old columns, keep only 'combined_text'
+columns_to_drop = ["overview", "keywords", "genres_list", "all_combined_keywords"]
+df_mod2 = df_combined.drop(columns=columns_to_drop)
+
+print(df_mod2.head())
+# Create a new column "Sentiment". where 0 or more than 0 is "not negative", while less than 0 is "negative" 
+df_mod2['sentiment'] = df_mod2['overview_sentiment'].apply(
+    lambda x: 'not negative' if x >= 0 else 'negative'
+)
+
+df_mod2 = df_mod2.drop('overview_sentiment', axis=1)
+df_mod2.columns = ['text', 'sentiment']
+
 
 ### Evaluation
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce bibendum neque eget nunc mattis eu sollicitudin enim tincidunt. Vestibulum lacus tortor, ultricies id dignissim ac, bibendum in velit. Proin convallis mi ac felis pharetra aliquam. Curabitur dignissim accumsan rutrum. In arcu magna, aliquet vel pretium et, molestie et arcu. Mauris lobortis nulla et felis ullamcorper bibendum. Phasellus et hendrerit mauris. Proin eget nibh a massa vestibulum pretium. Suspendisse eu nisl a ante aliquet bibendum quis a nunc. Praesent varius interdum vehicula. Aenean risus libero, placerat at vestibulum eget, ultricies eu enim. Praesent nulla tortor, malesuada adipiscing adipiscing sollicitudin, adipiscing eget est.
