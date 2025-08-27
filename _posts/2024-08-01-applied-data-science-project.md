@@ -374,4 +374,4 @@ Separate my data into 3 groups such as negative, neutral and positive instead of
 
 
 ## Source Codes and Datasets
-Upload your model files and dataset into a GitHub repo and add the link here. 
+https://github.com/shirmintoh/itd214_project
